@@ -1,10 +1,27 @@
 [project]
 name = "tlanslater"
 version = "0.1.0"
-description = "Add your description here"
+description = "High-Fidelity PDF Translation Bot"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "docling>=2.61.2",
     "openai>=2.8.1",
+    # ↓↓↓ ここに明示的に追加する（これが鉄則） ↓↓↓
+    "torch>=2.4.0",
+    "torchvision>=0.19.0",
+    "torchaudio>=2.4.0",
 ]
+
+# 1. PyTorch専用のリポジトリ(インデックス)を定義
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+# 2. torch関連はそこからダウンロードするように固定
+# (dependenciesに書いたものが、ここのルールに従ってDLされる)
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+torchvision = { index = "pytorch-cu128" }
+torchaudio = { index = "pytorch-cu128" }
