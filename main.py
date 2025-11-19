@@ -34,7 +34,7 @@ def main():
     # ---------------------------------------------------------
     base_dir = Path(__file__).parent
     # テスト用PDFのパス（実際運用時はここを引数などで変える）
-    input_pdf = base_dir / "tests/data/test.pdf"
+    input_pdf = base_dir / "tests/data/Pinocchio.pdf"
     
     # 出力先の設定
     output_dir = input_pdf.parent
@@ -80,13 +80,14 @@ def main():
     # 4. 再構築ループ（画像保存 & 翻訳）
     # ---------------------------------------------------------
     logger.info("Starting translation and reconstruction loop...")
-    
+
     md_lines = []
+    md_translated_lines = []
     image_counter = 0
-    
+
     # ドキュメントを頭からお尻まで舐める
     for item, level in doc.iterate_items():
-        
+
         # --- A. 画像 (保存してリンク) ---
         if isinstance(item, PictureItem):
             if item.image:
@@ -94,42 +95,48 @@ def main():
                 # ファイル名の生成
                 filename = f"{input_pdf.stem}_img_{image_counter}.png"
                 save_path = images_dir / filename
-                
+
                 # 実データの取得と保存
                 pil_image = item.get_image(doc)
                 if pil_image:
                     pil_image.save(save_path)
                     # Markdown用の相対パス
                     rel_path = f"./images/{filename}"
+                    md_translated_lines.append(f"\n![Image]({rel_path})\n")
                     md_lines.append(f"\n![Image]({rel_path})\n")
                     logger.debug(f"Saved image: {filename}")
             else:
                 # 画像枠はあるがデータがない場合
+                md_translated_lines.append("\n<!-- Empty Image Box -->\n")
                 md_lines.append("\n<!-- Empty Image Box -->\n")
 
         # --- B. 表 (Markdown化のみ) ---
         elif isinstance(item, TableItem):
             # 翻訳はリスクが高いので一旦そのまま
             md_lines.append(f"\n{item.export_to_markdown(doc=doc)}\n")
+            md_translated_lines.append(f"\n{item.export_to_markdown(doc=doc)}\n")
 
         # --- C. 見出し (翻訳) ---
         elif isinstance(item, SectionHeaderItem):
             prefix = "#" * (level + 1)
             # テキストを翻訳機に投げる
             translated_text = translator.translate(item.text)
-            md_lines.append(f"\n{prefix} {translated_text}\n")
+            md_lines.append(f"\n{prefix} {item.text}\n")
+            md_translated_lines.append(f"\n{prefix} {translated_text}\n")
             logger.info(f"Header: {item.text[:10]}... -> {translated_text[:10]}...")
 
         # --- D. リスト (翻訳) ---
         elif isinstance(item, ListItem):
             translated_text = translator.translate(item.text)
-            md_lines.append(f"* {translated_text}")
+            md_lines.append(f"* {item.text}")
+            md_translated_lines.append(f"* {translated_text}")
 
         # --- E. 本文 (翻訳) ---
         elif isinstance(item, TextItem):
             # 空行や意味のない短い文字はスキップしても良いが、Translator側で制御推奨
             translated_text = translator.translate(item.text)
-            md_lines.append(f"{translated_text}\n")
+            md_lines.append(f"{item.text}\n")
+            md_translated_lines.append(f"{translated_text}\n")
             # 進捗が見えるように少しログを出す
             if len(item.text) > 20:
                 logger.info(f"Text translated ({len(item.text)} chars)")
@@ -137,10 +144,12 @@ def main():
     # ---------------------------------------------------------
     # 5. ファイル保存
     # ---------------------------------------------------------
-    output_md = input_pdf.with_suffix('.md')
-    
+    output_md = input_pdf.with_name(f'{input_pdf.stem}_translated.md')
+    output_md_lines = input_pdf.with_name(f'{input_pdf.stem}_lines.md')
     try:
         with open(output_md, "w", encoding="utf-8") as f:
+            f.write("\n".join(md_translated_lines))
+        with open(output_md_lines, "w", encoding="utf-8") as f:
             f.write("\n".join(md_lines))
         logger.info(f"SUCCESS! Markdown saved to: {output_md}")
     except IOError as e:
