@@ -8,7 +8,7 @@ from docling.pipeline.threaded_standard_pdf_pipeline import ThreadedStandardPdfP
 
 logger = logging.getLogger(__name__)
 
-class PDFProcessor:
+class MdProcessor:
     def __init__(self):
         # パイプライン設定（初期化時に1回だけ作る）
         pipeline_options = ThreadedPdfPipelineOptions(

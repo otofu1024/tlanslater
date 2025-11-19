@@ -5,7 +5,7 @@ from pathlib import Path
 # === 自作モジュールのインポート ===
 # ※ファイル名やクラス名が違う場合はここを修正してください
 from translator import PLaMoTranslator
-from convert_pdf import PDFProcessor
+from convert_md import MdProcessor
 
 # === Doclingの型定義（アイテム識別用） ===
 from docling.datamodel.document import (
@@ -50,9 +50,9 @@ def main():
     
     # PDF解析エンジンの起動
     try:
-        processor = PDFProcessor()
+        processor = MdProcessor()
     except Exception as e:
-        logger.critical(f"Failed to initialize PDFProcessor: {e}")
+        logger.critical(f"Failed to initialize MdProcessor: {e}")
         return
 
     # 翻訳エンジンの起動 (LM Studioなどが動いている前提)
