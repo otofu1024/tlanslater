@@ -93,9 +93,10 @@ def main():
         # --- A. 画像アイテム (保存してリンク) ---
         if isinstance(item, PictureItem):
             if item.image:
-            image_counter += 1
-            filename = f"{input_pdf.stem}_img_{image_counter}.png"
-            save_path = images_dir / filename
+                image_counter += 1
+                # ファイル名の生成
+                filename = f"{input_pdf.stem}_img_{image_counter}.png"
+                save_path = images_dir / filename
 
             pil_image = item.get_image(doc)
             if pil_image:
@@ -105,20 +106,21 @@ def main():
                 md_lines.append(f"\n![Image]({rel_path})\n")
                 logger.debug(f"Saved image: {filename}")
             else:
-            md_translated_lines.append("\n<!-- Empty Image Box -->\n")
-            md_lines.append("\n<!-- Empty Image Box -->\n")
+                md_translated_lines.append("\n<!-- Empty Image Box -->\n")
+                md_lines.append("\n<!-- Empty Image Box -->\n")
 
         # --- B. 表 (Markdown化のみ) ---
         elif isinstance(item, TableItem):
+            # 翻訳はリスクが高いので一旦そのまま
             md_lines.append(f"\n{item.export_to_markdown(doc=doc)}\n")
             md_translated_lines.append(f"\n{item.export_to_markdown(doc=doc)}\n")
 
-        # --- C. コード (そのまま出力) ---
+        # --- C. コードブロック (Markdown化のみ) ---
         elif isinstance(item, CodeItem):
             md_translated_lines.append(f"\n```{item.code_language}\n{item.text}\n```\n")
             md_lines.append(f"\n```{item.code_language}\n{item.text}\n```\n")
 
-        # --- D. 数式 (そのまま出力) ---
+        # --- D. 数式 (Markdown化のみ) ---
         elif isinstance(item, FormulaItem):
             md_translated_lines.append(f"\n$$\n{item.text}\n$$\n")
             md_lines.append(f"\n$$\n{item.text}\n$$\n")
@@ -126,6 +128,7 @@ def main():
         # --- E. 見出し (翻訳) ---
         elif isinstance(item, SectionHeaderItem):
             prefix = "#" * (level + 1)
+            # テキストを翻訳機に投げる
             translated_text = translator.translate(item.text)
             md_lines.append(f"\n{prefix} {item.text}\n")
             md_translated_lines.append(f"\n{prefix} {translated_text}\n")
@@ -139,11 +142,13 @@ def main():
 
         # --- G. 本文 (翻訳) ---
         elif isinstance(item, TextItem):
+            # 空行や意味のない短い文字はスキップしても良いが、Translator側で制御推奨
             translated_text = translator.translate(item.text)
             md_lines.append(f"{item.text}\n")
             md_translated_lines.append(f"{translated_text}\n")
+            # 進捗が見えるように少しログを出す
             if len(item.text) > 20:
-            logger.info(f"Text translated ({len(item.text)} chars)")
+                logger.info(f"Text translated ({len(item.text)} chars)")
 
 
     # ---------------------------------------------------------
