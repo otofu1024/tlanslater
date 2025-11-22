@@ -8,7 +8,7 @@ from translator import PLaMoTranslator
 from convert_md import MdProcessor
 
 # === Doclingの型定義（アイテム識別用） ===
-from docling_core.types.doct import (
+from docling_core.types.doc import (
     PictureItem,
     TableItem,
     TextItem,
@@ -36,7 +36,7 @@ def main():
     # ---------------------------------------------------------
     base_dir = Path(__file__).parent
     # テスト用PDFのパス（実際運用時はここを引数などで変える）
-    input_pdf = base_dir / "tests/data/Pinocchio.pdf"
+    input_pdf = base_dir / "tests/data/MonkeyOCRv1.5.pdf"
     
     # 出力先の設定
     output_dir = input_pdf.parent
