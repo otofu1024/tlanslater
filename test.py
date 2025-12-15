@@ -1,9 +1,2 @@
-from docling_core.types.doc import (
-    PictureItem,
-    TableItem,
-    TextItem,
-    SectionHeaderItem,
-    ListItem,
-    CodeItem,
-    FormulaItem,
-)
+import cv2
+print(cv2.__version__)

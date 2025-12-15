@@ -6,6 +6,7 @@ from pathlib import Path
 # ※ファイル名やクラス名が違う場合はここを修正してください
 from translator import PLaMoTranslator
 from convert_md import MdProcessor
+from pdf_exporter import PDFExporter
 
 # === Doclingの型定義（アイテム識別用） ===
 from docling_core.types.doc import (
@@ -36,7 +37,7 @@ def main():
     # ---------------------------------------------------------
     base_dir = Path(__file__).parent
     # テスト用PDFのパス（実際運用時はここを引数などで変える）
-    input_pdf = base_dir / "tests/data/MonkeyOCRv1.5.pdf"
+    input_pdf = base_dir / "tests/data/test.pdf"
     
     # 出力先の設定
     output_dir = input_pdf.parent
@@ -55,6 +56,11 @@ def main():
         processor = MdProcessor()
     except Exception as e:
         logger.critical(f"Failed to initialize MdProcessor: {e}")
+        return
+    try:
+        pdf_exporter = PDFExporter()
+    except Exception as e:
+        logger.critical(f"Failed to initialize PDFExporter: {e}")
         return
 
     # 翻訳エンジンの起動 (LM Studioなどが動いている前提)
@@ -92,14 +98,13 @@ def main():
 
         # --- A. 画像アイテム (保存してリンク) ---
         if isinstance(item, PictureItem):
-            if item.image:
+            pil_image = item.get_image(doc)
+            if pil_image:
                 image_counter += 1
-                # ファイル名の生成
+                # ファイル名の生成は画像が取れた時だけ行う
                 filename = f"{input_pdf.stem}_img_{image_counter}.png"
                 save_path = images_dir / filename
 
-            pil_image = item.get_image(doc)
-            if pil_image:
                 pil_image.save(save_path)
                 rel_path = f"./images/{filename}"
                 md_translated_lines.append(f"\n![Image]({rel_path})\n")
@@ -156,14 +161,31 @@ def main():
     # ---------------------------------------------------------
     output_md = input_pdf.with_name(f'{input_pdf.stem}_translated.md')
     output_md_lines = input_pdf.with_name(f'{input_pdf.stem}_lines.md')
+    translated_content = "\n".join(md_translated_lines)
+    raw_content = "\n".join(md_lines)
     try:
         with open(output_md, "w", encoding="utf-8") as f:
-            f.write("\n".join(md_translated_lines))
+            f.write(translated_content)
         with open(output_md_lines, "w", encoding="utf-8") as f:
-            f.write("\n".join(md_lines))
+            f.write(raw_content)
         logger.info(f"SUCCESS! Markdown saved to: {output_md}")
     except IOError as e:
         logger.error(f"Failed to save file: {e}")
+        return
+
+    # ---------------------------------------------------------
+    # 6. PDF変換
+    # ---------------------------------------------------------
+    output_pdf = input_pdf.with_name(f'{input_pdf.stem}_translated.pdf')
+    try:
+        pdf_exporter.export(
+            markdown_text=translated_content,
+            output_pdf_path=output_pdf,
+            base_url=output_md.parent
+        )
+        logger.info(f"PDF saved to: {output_pdf}")
+    except Exception as e:
+        logger.error(f"Failed to generate PDF: {e}")
 
 if __name__ == "__main__":
     main()

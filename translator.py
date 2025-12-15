@@ -5,8 +5,16 @@ logger = logging.getLogger(__name__)
 
 class PLaMoTranslator:
     def __init__(self, base_url="http://localhost:1234/v1", api_key="not-needed"):
+        # 念のため /v1 を強制
+        if base_url.endswith("/"):
+            base_url = base_url[:-1]
+        if not base_url.endswith("/v1"):
+            base_url = base_url + "/v1"
+
         self.client = OpenAI(base_url=base_url, api_key=api_key)
-        self.model = "plamo-2-translate" # モデル名は固定か引数化
+        self.model = "plamo-2-translate"
+
+        logger.warning(f"OpenAI base_url = {base_url}")
 
     def translate(self, text: str, input_lang="English", output_lang="Japanese") -> str:
         """
