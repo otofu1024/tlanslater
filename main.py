@@ -37,7 +37,7 @@ def main():
     # ---------------------------------------------------------
     base_dir = Path(__file__).parent
     # テスト用PDFのパス（実際運用時はここを引数などで変える）
-    input_pdf = base_dir / "tests/data/test.pdf"
+    input_pdf = base_dir / "tests/data/amazon-dynamo-sosp2007.pdf"
     
     # 出力先の設定
     output_dir = input_pdf.parent
